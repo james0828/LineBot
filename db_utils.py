@@ -2,7 +2,7 @@ from settings import SETTINGS
 import psycopg2
 
 INSERT_MESSAGE_QUEUE = """
-INSERT INTO MESSAGE_QUEUE (room_id, msg) VALUES (%s, %s)
+INSERT INTO MESSAGE_QUEUE (room_id, msg, is_bot) VALUES (%s, %s, %s)
 """
 
 QUERY_MESSAGE_QUEUE = """
@@ -59,8 +59,8 @@ class DB:
   def rollback(self):
     self.conn.rollback()
 
-  def insert_message(self, room_id, msg):
-    self.cursor.execute(INSERT_MESSAGE_QUEUE, (room_id, msg))
+  def insert_message(self, room_id, msg, is_bot=False):
+    self.cursor.execute(INSERT_MESSAGE_QUEUE, (room_id, msg, is_bot))
     self.commit()
   
   def update_message(self, id):

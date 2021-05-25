@@ -32,6 +32,7 @@ cursor.execute("""
     room_id VARCHAR(200),
     content VARCHAR(5000),
     finished boolean default(FALSE),
+    is_bot boolean default(FALSE),
     CONSTRAINT unique_room_id_content UNIQUE(room_id, content)
   );""")
 

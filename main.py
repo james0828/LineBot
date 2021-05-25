@@ -131,10 +131,10 @@ def highwayHandler(id, strr):
         msgs = UTILS.highway_crawler(data)
         if msgs:
             for msg in msgs:
-                db.insert_message(id, msg)
+                db.insert_message(id, msg, True)
             return
 
-    db.insert_message(id, '很抱歉，您的高鐵查詢指令有錯誤!')
+    db.insert_message(id, '很抱歉，您的高鐵查詢指令有錯誤!', True)
 
 def todoListHandler(id, strr):
     strr = strr.strip()
@@ -174,11 +174,11 @@ def todoListHandler(id, strr):
         db.delete_todo_list(id, strr)
         msg = '刪除成功'
 
-    db.insert_message(id, msg)
+    db.insert_message(id, msg, True)
 
-def handleMSG(id, text):
+def handleMSG(id, text, status):
     text = text.strip()
-    print(text)
+
     if text[:4].lower() == 'menu':
         menu(id)
     elif text[:6].lower() == 'resume':
@@ -204,12 +204,17 @@ DBMS有使用過 MongoDB/ MySQL/ PostgreSQL/ DynamoDB/ ES，\平常通常是用 
     elif text[:6].lower() == 'github':
         line_bot_api.push_message(id, TextSendMessage('https://github.com/james0828'))
     else:
-        line_bot_api.push_message(id, TextSendMessage(text))
+        # 如果是聊天機器人這邊發出的話，回傳
+        if status:
+            line_bot_api.push_message(id, TextSendMessage(text))
+        else:
+            line_bot_api.push_message(id, TextSendMessage('很抱歉，您輸入的指令沒有用途，請輸入menu查看使用選單'))
+            
 
 def reply_message():
     msgs = db.query_message()
     for msg in msgs:
-        handleMSG(msg[1], msg[2])
+        handleMSG(msg[1], msg[2], msg[3])
         db.update_message(msg[0])
 
     db.commit()
@@ -256,11 +261,11 @@ def handle_message(event):
 @handler.add(PostbackEvent)
 def handle_post_message(event):
     if getattr(event.source, 'group_id', None):
-        db.insert_message(event.source.group_id, event.postback.data)
+        db.insert_message(event.source.group_id, event.postback.data, True)
     elif getattr(event.source, 'room_id', None):
-        db.insert_message(event.source.room_id, event.postback.data)
+        db.insert_message(event.source.room_id, event.postback.data, True)
     else:
-        db.insert_message(event.source.user_id, event.postback.data)
+        db.insert_message(event.source.user_id, event.postback.data, True)
 
 @handler.add(FollowEvent)
 def handle_follow(event):
@@ -268,7 +273,7 @@ def handle_follow(event):
 
 @handler.add(JoinEvent)
 def handle_follow(event):
-    db.insert_message(event.source.user_id, '嗨，輸入 menu 可以查看選單')
+    db.insert_message(event.source.user_id, '嗨，輸入 menu 可以查看選單', True)
     menu(event.source.user_id)
 
 @handler.add(MemberJoinedEvent)
@@ -285,7 +290,7 @@ def handle_follow(event):
             users.append(profile.display_name)
     
     if len(users) !=0:
-        db.insert_message(room_id, '歡迎 %s 的加入，輸入 menu 可以查看選單' % ','.join(users))
+        db.insert_message(room_id, '歡迎 %s 的加入，輸入 menu 可以查看選單' % ','.join(users), True)
 
 @handler.add(MemberLeftEvent)
 def handle_follow(event):
@@ -302,7 +307,7 @@ def handle_follow(event):
             users.append(profile.display_name)
     
     if len(users) !=0:
-        db.insert_message(room_id, '很遺憾，在我們的群組缺少了 %s %s使用者，為了避免更多人退出，請輸入 menu 查看選單' % (','.join(users), '這個' if len(users) == 1 else '這些'))
+        db.insert_message(room_id, '很遺憾，在我們的群組缺少了 %s %s使用者，為了避免更多人退出，請輸入 menu 查看選單' % (','.join(users), '這個' if len(users) == 1 else '這些'), True)
 
 
 if __name__ == "__main__":
